@@ -55,6 +55,7 @@ def linear_solver(variables_df, requirements):
     """Material optimization problem"""
     solver = pywraplp.Solver.CreateSolver("GLOP")
 
+    print("[Variables & Constraints]")
     # Create the variables to use
     variables = []
     for idx, row in variables_df.iterrows():
@@ -74,7 +75,7 @@ def linear_solver(variables_df, requirements):
     # Objective function, minimize the difficulty
     objective = solver.Objective()
     for i, row in variables_df.iterrows():
-        objective.SetCoefficient(var=variables[variables_df.index.get_loc(i)], coeff=float(row["Difficulty"]))
+        objective.SetCoefficient(var=variables[variables_df.index.get_loc(i)], coeff=float(row["Playability"]))
     objective.SetMinimization()
 
     # Solve the system.
@@ -82,7 +83,7 @@ def linear_solver(variables_df, requirements):
     status = solver.Solve()
 
     # Check that the problem has an optimal solution.
-    print("\nSolutions:")
+    print("[Solutions]")
     if status != solver.OPTIMAL:
         print("The problem does not have an optimal solution!")
         if status == solver.FEASIBLE:
@@ -100,27 +101,33 @@ def linear_solver(variables_df, requirements):
     for i, var in enumerate(variables):
         if var.solution_value() > 0.0:
             print(
-                f"    {variables_df.index[i]}: {var.solution_value():.2f} matches at {variables_df.iloc[i]['Difficulty'] * var.solution_value():.2f} difficulty"
+                f"    {variables_df.index[i]}: {var.solution_value():.2f} matches at {variables_df.iloc[i]['Playability'] * var.solution_value():.2f} playability"
             )
-            total_sum += variables_df.iloc[i]["Difficulty"] * var.solution_value()
+            total_sum += variables_df.iloc[i]["Playability"] * var.solution_value()
             row.update({f"{variables_df.index[i]}": var.solution_value()})
             nr_of_mats += 1
 
     print("Total nr of matches {:.2f}".format(total_sum))
     row.update({"Nr of matches": nr_of_mats, "Total_diff": total_sum})
 
-    print("\nAdvanced usage:")
+    print("[Advanced usage]")
     print(f"Problem solved in {solver.wall_time():d} milliseconds")
     print(f"Problem solved in {solver.iterations():d} iterations")
+    print("\n")
     return row
 
 
 # this will show best solution
 required_tokens = [
-    ["Crawling", 3.0],
+    ["Mounted",     1.0],
+    ["Initiator",   2.0],
+    ["Flying",      3.0],
+    ["Walking",     2.0],
+    ["Running",     2.0],
+    ["Jumping",     1.0],
+    ["Disabler",    1.0],
     ["Teleporting", 1.0],
-    ["Ranged", 1.0],
-    ["Escape", 1.0]
+    # ["Pusher", 1.0],
 ]
 best_solution = linear_solver(df, required_tokens)
 st.table(pd.DataFrame([best_solution]))
