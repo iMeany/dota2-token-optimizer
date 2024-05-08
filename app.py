@@ -2,28 +2,52 @@ import streamlit as st
 import pandas as pd
 from ortools.linear_solver import pywraplp
 
-st.set_page_config(page_title="Dota2 Crownfall Token optimization", layout="wide")
+st.set_page_config(
+    page_title="Dota2 Crownfall Token optimization",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-# * Header
-st.write("# Dota2 Crownfall Token optimization")
-st.write("Optimal hero selection for gathering tokens.")
-
-# * Editable Hero token table 
-@st.cache_resource
-def load_hero_token_data():
-    return pd.read_csv("data/heroes.csv", index_col=0)
-df = load_hero_token_data().iloc[:, :-1]
-st.write("""## Heroes and tokens
+# * Sidebar description
+st.sidebar.write("# Dota2 Crownfall Token optimization")
+st.sidebar.write("Optimal hero selection for min/max-ing when gathering tokens.")
+st.sidebar.write("""## Heroes and tokens
 This table shows the heroes and tokens you get for winning a match.  
 * Normal/Ranked games give +3 tokens for a win, +1 token for a loss.  
 * Turbo gives +2 out of 3 random tokens on a win, 0 on a loss.  
 * The `Playability` column is the individual difficulty of the hero. The algorithm uses this as a *cost* and tries to minimize it.
 * **You can edit the `Playability` and **increase** the number if you want the hero to be less likely to be chosen.**  
 """)
-#  You **can** edit the table below in case some tokens are mapped wrong, on refresh it reloads to default.
-edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
+st.sidebar.write("""## Required Token selection
+This allows you to select the tokens you want to collect. Useful if trying to minimize the number of games played when farming Divine Developer offering tokens.
+""")
+st.sidebar.write("""## Optimal hero selection
+This table shows the optimal hero selection based on the tokens you want to collect.
+""")
+st.sidebar.caption(
+    """[dota2-token-optimizer](https://github.com/iMeany/dota2-token-optimizer) | 2024 MRU"""
+)
 
-# * Required token selection 
+
+# * Editable Hero token table
+st.write("## Heroes and tokens")
+st.write(
+    "You can edit the `Playability` and **increase** the number if you want the hero to be less likely to be chosen."
+)
+
+
+@st.cache_resource
+def load_hero_token_data():
+    return pd.read_csv("data/heroes.csv", index_col=0)
+
+
+df = load_hero_token_data().iloc[:, :-1]
+
+edited_df = st.data_editor(
+    df, disabled=df.columns[1:].tolist(), use_container_width=True
+)
+
+# * Required token selection
 st.write("## Required Token selection")
 unique_token_list = df.columns[1:].values.tolist()
 # splitting into multiple columns/rows for smaller screens
@@ -62,7 +86,7 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     print("Solving with " + optimization_problem_type)
 
     infinity = solver.infinity()
-    
+
     # Variables and constraints
     variables = []
     for idx, row in val_df.iterrows():
@@ -72,8 +96,10 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
         constraints.append(solver.Constraint(required, infinity))
         for j, row in val_df.iterrows():
             # print(i, j, variables[val_df.index.get_loc(j)], row[token])
-            constraints[i].SetCoefficient(var=variables[val_df.index.get_loc(j)], coeff=int(row[token]))
-    
+            constraints[i].SetCoefficient(
+                var=variables[val_df.index.get_loc(j)], coeff=int(row[token])
+            )
+
     # Objective and cost
     objective = solver.Objective()
     for i, row in val_df.iterrows():
@@ -124,8 +150,8 @@ if best_solution.empty:
 else:
     st.write("## Optimal hero selection")
     # adding totals row
-    best_solution.loc['Total'] = best_solution.sum(numeric_only=True, axis=0)
+    best_solution.loc["Total"] = best_solution.sum(numeric_only=True, axis=0)
     # drop cols where total is zero
     best_solution = best_solution.loc[:, (best_solution != 0).any(axis=0)]
     st.dataframe(best_solution.round(0).astype(int), use_container_width=True)
-    st.caption('Remember to increase the `Playability` value for the heroes you don\'t want to play.')
+    st.caption("Remember you can increase the `Playability` value for the heroes you don't want to play.")
