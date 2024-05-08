@@ -65,8 +65,7 @@ for idx, col in enumerate(token_cell):
                 st.number_input(
                     label=f"{emojis[idx]} {unique_token_list[idx]}",
                     min_value=0,
-                    step=1,
-                    help=unique_token_list[idx],
+                    step=1
                 )
             ]
 
