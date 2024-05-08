@@ -24,9 +24,7 @@ This allows you to select the tokens you want to collect. Useful if trying to mi
 st.sidebar.write("""## Optimal hero selection
 This table shows the optimal hero selection based on the tokens you want to collect.
 """)
-st.sidebar.caption(
-    """[dota2-token-optimizer](https://github.com/iMeany/dota2-token-optimizer) | 2024 MRU"""
-)
+st.sidebar.caption("""[dota2-token-optimizer](https://github.com/iMeany/dota2-token-optimizer) | 2024 MRU""")
 
 
 # * Editable Hero token table
@@ -43,9 +41,7 @@ def load_hero_token_data():
 
 df = load_hero_token_data().iloc[:, :-1]
 
-edited_df = st.data_editor(
-    df, disabled=df.columns[1:].tolist(), use_container_width=True
-)
+edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
 # * Required token selection
 st.write("## Required Token selection")
