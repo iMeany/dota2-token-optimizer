@@ -9,3 +9,7 @@ Suggestions and contributions are welcome.
 - [x] Fix hero token csv
 - [x] Change optimizer to Integer type
 - [x] Reformat match table, fix match count
+- [x] Hide heroes table
+- [x] Add recalculate button
+- [ ] Add "this hero gives x tokens from needed" col?
+- [ ] Color needed cols
