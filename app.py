@@ -15,11 +15,13 @@ st.sidebar.write("""## Required Token selection
 This allows you to select the tokens you want to collect. Useful if trying to minimize the number of games played when farming Divine Developer offering tokens.
 """)
 st.sidebar.write("""## Heroes and tokens
-This table shows the heroes and tokens you get for winning a match.  
+This (by default collapsed) table shows the heroes and tokens you get for winning a match.  
 * Normal/Ranked games give +3 tokens for a win, +1 token for a loss.  
 * Turbo gives +2 out of 3 random tokens on a win, 0 on a loss.  
-* The `Playability` column is the individual difficulty of the hero. The algorithm uses this as a *cost* and tries to minimize it.
-* **You can edit the `Playability` and **increase** the number if you want the hero to be less likely to be chosen.**  
+* The `DifficultyScore` column is the individual difficulty of the hero. The algorithm uses this as a *cost* and tries to minimize it.
+* You can edit the `DifficultyScore` and **increase** the number if you want the hero to be less likely to be chosen. 
+  * Setting the value to `200` would mean that you would play 2 games with another hero or 1 game with this hero.
+  * Setting the value to `101` would only mean that alghoritm would choose the alternative option if available.  
 """)
 st.sidebar.write("""## Optimal hero selection
 This table shows the optimal hero selection based on the tokens you want to collect.
@@ -29,53 +31,31 @@ st.sidebar.caption("""[dota2-token-optimizer](https://github.com/iMeany/dota2-to
 # * Required token selection
 st.write("## Required tokens selection")
 df = load_hero_token_data().iloc[:, :-1]
+# shuffling the rows so that it gives different solutions on recalculation, equivalent results are based on order of rows
+df = df.sample(frac=1)
 unique_token_list = df.columns[1:].values.tolist()
-# splitting into multiple columns/rows for smaller screens
-nr_per_row = 6
-token_cell = []
-for i in range(0, len(unique_token_list), nr_per_row):
-    if i + nr_per_row < len(unique_token_list):
-        token_cell.extend(st.columns(nr_per_row))
-    else:
-        token_cell.extend(st.columns(len(unique_token_list) - i))
-
-emojis = ["🛗", "💥", "🛟", "❤️", "🚶‍♂️", "🐴", "🕷️", "🏃‍♂️", "🏹", "🪽", "⛔️", "🛡️", "👊", "🗼", "🦘", "🐍", "🥷", "🥊"]
-token_input = []
-for idx, col in enumerate(token_cell):
-    cell = col.container()
-    with cell:
-        with st.container(border=True):
-            token_input += [
-                st.number_input(
-                    label=f"{emojis[idx]} {unique_token_list[idx]}",
-                    min_value=0,
-                    step=1
-                )
-            ]
 
 # * Token selection
-
 token_images = load_token_images()
-columns = st.columns(len(token_images))
-for idx, img in enumerate(token_images):
-    with columns[idx]:
-        with st.container(border=True):
-            st.image(img, caption=f"{unique_token_list[idx]}") 
-            st.button("➕", key=f"token_{idx}")
-            st.button("➖", key=f"tokenr_{idx}")
-    # st.image(token_images[idx], caption=f"Token {idx}", width=100)
-
-
-required_tokens = [[token, value] for token, value in zip(unique_token_list, token_input)]
+columns = st.columns(round(len(token_images)/2))
+columns = columns + st.columns(round(len(token_images)/2))
+required_tokens = {}
+col_idx = 0
+for key in token_images:
+    with columns[col_idx]:
+        st.text(f"{key}")
+        st.image(token_images[key], use_column_width=True)
+        required_tokens[key] = st.number_input("Amount", value=0, key=f"token_{key}_input", label_visibility="collapsed")
+    col_idx+=1
 
 # * Editable Hero token table
 with st.expander("Show hero/token table"):
     st.write("### Heroes and tokens")
-    st.write("You can edit the `Playability` and **increase** the number if you want the hero to be less likely to be chosen.")
+    st.write("You can edit the `DifficultyScore` and **increase** the number if you want the hero to be less likely to be chosen.")
     edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
 # * Optimal hero selection
-best_solution = integer_linear_solver(edited_df, required_tokens, "Playability", "SAT")
+best_solution = integer_linear_solver(edited_df, required_tokens.items(), "DifficultyScore")
 
 if best_solution.empty:
     st.write("No solution found. Try to relax the constraints.")
@@ -87,5 +67,6 @@ else:
     # drop cols where total is zero
     best_solution = best_solution.loc[:, (best_solution != 0).any(axis=0)]
     st.dataframe(best_solution.round(0).astype(int), use_container_width=True)
-    st.caption("Remember you can increase the `Playability` value for the heroes you don't want to play.")
+    st.caption("Remember that you can increase the `DifficultyScore` value for the heroes you don't want to play.")
+    st.caption("Clicking 'Recalculate' may give a different result if there are several equally optimal solutions.")
     st.button("Recalculate", type="secondary")

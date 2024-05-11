@@ -10,17 +10,20 @@ def load_hero_token_data():
 
 @st.cache_resource
 def load_token_images():
-    img = Image.open("assets/tokens2.png")
-    sprite_size = 130
+    img = Image.open("assets/tokens.png")
+    sprite_h = 106
+    sprite_w = 90
     token_images = []
-    for i in range(0, img.width, sprite_size):
-        for j in range(0, img.height, sprite_size):
-            token = img.crop((i, j, i + sprite_size, j + sprite_size))
-            token_images.append(token)
-    return token_images
-    
+    token_order = ["Walking","Running","Flying","Floating","Slithering","Mounted","Crawling","Jumping","Teleporting","Melee","Ranged","Disabler","Escape","Durable","Initiator","Nuker","Pusher","Healer"]
+    for i in range(0, img.height, sprite_h):
+        for j in range(0, img.width, sprite_w):
+            if len(token_images) >= 18:
+                break
+            token_images.append(img.crop((j, i, j+sprite_w, i+sprite_h)))
+    return dict(zip(token_order, token_images))
+
 # @st.cache_data # if we dont cache we get different results on recalculation
-def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_type):
+def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_type="SAT"):
     """Solves the integer linear problem with the given requirements and cost column."""
     solver = pywraplp.Solver.CreateSolver(optimization_problem_type)
     if not solver:
