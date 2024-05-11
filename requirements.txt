@@ -1,3 +1,4 @@
+streamlib
 pandas
 ortools
 pillow
