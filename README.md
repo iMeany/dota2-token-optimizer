@@ -2,7 +2,9 @@
 
 Dota 2 Crownfall event optimal hero selection for min/max-ing when gathering tokens.  
 Available at <https://dota2-token-optimizer.streamlit.app>.  
-Suggestions and contributions are welcome.
+Suggestions and contributions are welcome.  
+
+Token images are extracted from Dota2 game and are property of Valve Corporation.
 
 ## TODO
 
