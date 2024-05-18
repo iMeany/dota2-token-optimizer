@@ -61,11 +61,13 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     result_status = solver.Solve()
 
     # The problem has an optimal solution.
-    assert result_status == pywraplp.Solver.OPTIMAL
-
-    # The solution looks legit (when using solvers others than
-    # GLOP_LINEAR_PROGRAMMING, verifying the solution is highly recommended!).
-    assert solver.VerifySolution(1e-7, True)
+    if result_status != pywraplp.Solver.OPTIMAL:
+        print("The problem does not have an optimal solution!")
+        if result_status == pywraplp.Solver.FEASIBLE:
+            print("A potentially suboptimal solution was found.")
+        else:
+            print(result_status)
+            return pd.DataFrame()
 
     print("Problem solved in %f milliseconds" % solver.wall_time())
 
