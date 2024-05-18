@@ -43,10 +43,15 @@ required_tokens = {}
 col_idx = 0
 for key in token_images:
     with columns[col_idx]:
-        st.text(f"{key}")
-        st.image(token_images[key], use_column_width=True)
-        required_tokens[key] = st.number_input("Amount", value=0, key=f"token_{key}_input", label_visibility="collapsed")
+        with st.container():
+            st.text(f"{key}")
+            st.image(token_images[key], use_column_width=True)
+            # read from query params
+            val = int(st.query_params.get(key, "0"))
+            required_tokens[key] = st.number_input("Amount", value=val, key=f"token_{key}_input", label_visibility="collapsed")
     col_idx+=1
+# set query params
+st.query_params.from_dict(required_tokens)
 
 # * Editable Hero token table
 with st.expander("Show hero/token table"):
@@ -55,7 +60,11 @@ with st.expander("Show hero/token table"):
     edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
 # * Optimal hero selection
-best_solution = integer_linear_solver(edited_df, required_tokens.items(), "DifficultyScore")
+try:
+    best_solution = integer_linear_solver(edited_df, required_tokens.items(), "DifficultyScore")
+except:
+    st.write("Error occured during optimization. Try again.")
+    st.stop()
 
 if best_solution.empty:
     st.write("No solution found. Try to relax the constraints.")
