@@ -1,6 +1,6 @@
 import streamlit as st
 
-from helpers import integer_linear_solver, load_hero_token_data, load_token_images
+from helpers import integer_linear_solver, load_hero_token_data, load_act_images
 
 st.set_page_config(
     page_title="Dota2 Crownfall Token optimization",
@@ -30,28 +30,32 @@ st.sidebar.caption("""[dota2-token-optimizer](https://github.com/iMeany/dota2-to
 
 # * Required token selection
 st.write("## Required tokens selection")
-df = load_hero_token_data().iloc[:, :-1]
+df = load_hero_token_data().iloc[:, :]
 # shuffling the rows so that it gives different solutions on recalculation, equivalent results are based on order of rows
 df = df.sample(frac=1)
 unique_token_list = df.columns[1:].values.tolist()
 
 # * Token selection
-token_images = load_token_images()
-columns = st.columns(round(len(token_images)/2))
-columns = columns + st.columns(round(len(token_images)/2))
-required_tokens = {}
-col_idx = 0
-for key in token_images:
-    with columns[col_idx]:
-        with st.container():
-            st.text(f"{key}")
-            st.image(token_images[key], use_column_width=True)
-            # read from query params
-            val = int(st.query_params.get(key, "0"))
-            required_tokens[key] = st.number_input("Amount", value=val, key=f"token_{key}_input", label_visibility="collapsed")
-    col_idx+=1
-# set query params
-st.query_params.from_dict(required_tokens)
+tabs = st.tabs(['Act 1: The Markets of Midgate', 'Act 2: The Deserts of Druud'])
+token_images = load_act_images()
+for idx, tab in enumerate(tabs):
+    with tabs[idx]:
+        img_per_col = 9
+        columns = st.columns(spec=img_per_col)
+        columns = columns + st.columns(img_per_col)
+        required_tokens = {}
+        col_idx = 0
+        for key in token_images[idx]:
+            with columns[col_idx]:
+                with st.container():
+                    st.text(f"{key}")
+                    st.image(token_images[idx][key], use_column_width=True)
+                    # read from query params
+                    val = int(st.query_params.get(key, "0"))
+                    required_tokens[key] = st.number_input("Amount", value=val, key=f"token_{key}_input", label_visibility="collapsed")
+            col_idx+=1
+        # set query params
+        st.query_params.from_dict(required_tokens)
 
 # * Editable Hero token table
 with st.expander("Show hero/token table"):
