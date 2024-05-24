@@ -6,6 +6,11 @@ Suggestions and contributions are welcome.
 
 Token images are extracted from Dota2 game and are property of Valve Corporation.
 
+## Update 24-May-2024
+
+* Added Act 2 hero tokens and calculation.
+* You can now save the page in browser or bookmark it to save your current selection.
+
 ## TODO
 
 - [x] Fix hero token CSV
@@ -16,6 +21,8 @@ Token images are extracted from Dota2 game and are property of Valve Corporation
 - [x] Add icons from game
 - [x] Parameters in URL
   - [ ] Fix 3 missing column images (colored)
+- [x] Add Act 2 heroes
+  - [ ] Add nicer Act 2 hero token images
 - [ ] Add "this hero gives x tokens from needed" col?
 - [ ] Color needed cols
 - [ ] Mobile layout (proper breaks)
