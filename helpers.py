@@ -8,18 +8,15 @@ from PIL import Image
 def load_hero_token_data():
     return pd.read_csv("data/heroes.csv", index_col=0)
 
-# @st.cache_resource
-def load_act_images():
-    token_order = [["Walking","Running","Flying","Floating","Slithering","Mounted","Crawling","Jumping","Teleporting","Melee","Ranged","Disabler","Escape","Durable","Initiator","Nuker","Pusher","Healer"],
-                   ["Strength","Agility","Intelligence","Universal","Demon","Undead","Spirit","Beast","Monster","God","Elemental","Unarmed","Blade","Polearm","Club","Wand","Ammunition"]]
+@st.cache_data
+def load_act_images(token_order):
     act_token_images = []
     for idx, act_tokens in enumerate(token_order):
         token_images = _load_token_images(act_tokens=act_tokens, act_nr=idx+1)
         act_token_images.append(token_images)
-    # st.write(act_tokens)
     return act_token_images
 
-# @st.cache_resource
+@st.cache_data
 def _load_token_images(act_tokens, act_nr=1):
     img = Image.open(f"assets/tokens{act_nr}.png")
     token_dims = [(106, 90), (101, 91)]
@@ -32,6 +29,11 @@ def _load_token_images(act_tokens, act_nr=1):
                 break
             token_images.append(img.crop((j, i, j+sprite_w, i+sprite_h)))
     return dict(zip(act_tokens, token_images))
+
+def get_col_grid(img_per_col=9):
+    columns = st.columns(spec=img_per_col)
+    columns = columns + st.columns(img_per_col)
+    return columns
 
 # @st.cache_data # if we dont cache we get different results on recalculation
 def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_type="SAT"):
@@ -48,6 +50,8 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     for idx, row in val_df.iterrows():
         variables.append(solver.IntVar(0, infinity, f"{idx}"))
     constraints = []
+    # only keep requirements > 0
+    requirements = [(token, required) for token, required in requirements if required > 0]
     for i, (token, required) in enumerate(requirements):
         constraints.append(solver.Constraint(required, infinity))
         for j, row in val_df.iterrows():
