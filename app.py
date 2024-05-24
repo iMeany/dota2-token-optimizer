@@ -40,7 +40,7 @@ token_order = [["Walking","Running","Flying","Floating","Slithering","Mounted","
                ["Strength","Agility","Intelligence","Universal","Demon","Undead","Spirit","Beast","Monster","God","Elemental","Unarmed","Blade","Polearm","Club","Wand","Ammunition"]]
 
 # * Token selection
-radio_select = st.radio("Select act", act_names, horizontal=True)
+radio_select = st.radio("Select act", act_names, index=1, horizontal=True)
 act_idx = act_names.index(radio_select)
 st.write(f"### {radio_select}")
 token_images = load_act_images(token_order)
