@@ -45,43 +45,46 @@ act_idx = act_names.index(radio_select)
 st.write(f"### {radio_select}")
 token_images = load_act_images(token_order)
 required_tokens = {}
-columns = get_col_grid()
-col_idx = 0
-st.query_params.clear()
-for key in token_images[act_idx]:
-    with columns[col_idx]:
-        st.text(f"{key}")
-        st.image(token_images[act_idx][key], use_column_width=True)
-        # read from query params
-        val = int(st.query_params.get(key, "0"))
-        required_tokens[key] = st.number_input("Amount", value=val, key=f"token_{key}_input", label_visibility="collapsed")
-    col_idx+=1
+# columns = get_col_grid()
+# col_idx = 0
+token_col, table_col = st.columns([2, 8])
+# st.query_params.clear()
+with token_col:
+    for key in token_images[act_idx]:
+        with token_col.container():
+            icon_col, text_col, input_col = st.columns([2, 6, 10])
+            icon_col.image(token_images[act_idx][key], width=34)
+            text_col.text(f"{key}")
+            # read from query params
+            val = int(st.query_params.get(key, "0"))
+            required_tokens[key] = input_col.number_input("Amount", value=val, key=f"token_{key}_input", label_visibility="collapsed")
 # set query params so browser saves the state
 st.query_params.update(required_tokens)
 
 # * Editable Hero token table
-with st.expander("Show hero/token table"):
-    st.write("### Heroes and tokens")
-    st.write("You can edit the `DifficultyScore` and **increase** the number if you want the hero to be less likely to be chosen.")
-    edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
+with table_col:
+    with st.expander("Show hero/token table"):
+        st.write("### Heroes and tokens")
+        st.write("You can edit the `DifficultyScore` and **increase** the number if you want the hero to be less likely to be chosen.")
+        edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
-# * Optimal hero selection
-try:
-    best_solution = integer_linear_solver(edited_df[['DifficultyScore'] + token_order[act_idx]], required_tokens.items(), "DifficultyScore")
-except:
-    st.write("Error occured during optimization. Try again.")
-    st.stop()
+    # * Optimal hero selection
+    try:
+        best_solution = integer_linear_solver(edited_df[['DifficultyScore'] + token_order[act_idx]], required_tokens.items(), "DifficultyScore")
+    except:
+        st.write("Error occured during optimization. Try again.")
+        st.stop()
 
-if best_solution.empty:
-    st.write("No solution found. Try to relax the constraints.")
-    st.stop()
-else:
-    st.write("## Optimal hero selection")
-    st.button("Recalculate solutions", type="secondary")
-    # adding totals row
-    best_solution.loc["Total"] = best_solution.sum(numeric_only=True, axis=0)
-    # drop cols where total is zero
-    best_solution = best_solution.loc[:, (best_solution != 0).any(axis=0)]
-    st.dataframe(best_solution.round(0).astype(int), use_container_width=True)
-    st.caption("Remember that you can increase the `DifficultyScore` value for the heroes you don't want to play.")
-    st.caption("Clicking 'Recalculate solutions' may give a different result if there are several equally optimal solutions.")
+    if best_solution.empty:
+        st.write("No solution found. Try to relax the constraints.")
+        st.stop()
+    else:
+        st.write("## Optimal hero selection")
+        st.button("Recalculate solutions", type="secondary")
+        # adding totals row
+        best_solution.loc["Total"] = best_solution.sum(numeric_only=True, axis=0)
+        # drop cols where total is zero
+        best_solution = best_solution.loc[:, (best_solution != 0).any(axis=0)]
+        st.dataframe(best_solution.round(0).astype(int), use_container_width=True)
+        st.caption("Remember that you can increase the `DifficultyScore` value for the heroes you don't want to play.")
+        st.caption("Clicking 'Recalculate solutions' may give a different result if there are several equally optimal solutions.")
