@@ -6,7 +6,11 @@ from PIL import Image
 
 @st.cache_data
 def load_hero_token_data():
-    return pd.read_csv("data/heroes.csv", index_col=0)
+    df = pd.read_csv("data/heroes.csv", index_col=0)
+    act_names = ['Act 1: The Markets of Midgate', 'Act 2: The Deserts of Druud']
+    token_order = [["Walking","Running","Flying","Floating","Slithering","Mounted","Crawling","Jumping","Teleporting","Melee","Ranged","Disabler","Escape","Durable","Initiator","Nuker","Pusher","Healer"],
+                   ["Strength","Agility","Intelligence","Universal","Demon","Undead","Spirit","Beast","Monster","God","Elemental","Unarmed","Blade","Polearm","Club","Wand","Ammunition"]]
+    return df, act_names, token_order
 
 @st.cache_data
 def load_act_images(token_order):
@@ -51,7 +55,7 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
         variables.append(solver.IntVar(0, infinity, f"{idx}"))
     constraints = []
     # only keep requirements > 0
-    requirements = [(token, required) for token, required in requirements if required > 0]
+    requirements = [(token, required) for token, required in requirements if required > 0 and token in val_df.columns]
     for i, (token, required) in enumerate(requirements):
         constraints.append(solver.Constraint(required, infinity))
         for j, row in val_df.iterrows():
@@ -70,8 +74,7 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     objective.SetMinimization()
 
     # Solve
-    print("Number of variables = %d" % solver.NumVariables())
-    print("Number of constraints = %d" % solver.NumConstraints())
+    print(f"Number of variables = {solver.NumVariables()}, Number of constraints = {solver.NumConstraints()}")
 
     result_status = solver.Solve()
 
@@ -84,23 +87,20 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
             print(result_status)
             return pd.DataFrame()
 
-    print("Problem solved in %f milliseconds" % solver.wall_time())
+    print(f"Problem solved in {solver.wall_time()} ms")
 
     # The objective value of the solution.
-    print("Optimal objective value = %f" % solver.Objective().Value())
+    print(f"Optimal objective value = {objective.Value()}:")
 
     # The value of each variable in the solution.
     result_df = pd.DataFrame(columns=["Matches"])
     for variable in variables:
         if variable.solution_value() > 0:
-            print("%s = %f" % (variable.name(), variable.solution_value()))
+            print(f"  {variable.name()} = {variable.solution_value()}")
             # all the tokens from original dataframe + matches number from solution_value
             row = val_df.loc[variable.name()].copy()
             row["Matches"] = variable.solution_value()
             result_df = pd.concat([result_df, row.to_frame().T])
-
-    print("Advanced usage:")
-    print("Problem solved in %d branch-and-bound nodes" % solver.nodes())
-    print("\n")
+    print("")
     return result_df
 
