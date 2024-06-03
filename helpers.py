@@ -93,7 +93,7 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     print(f"Optimal objective value = {objective.Value()}:")
 
     # The value of each variable in the solution.
-    result_df = pd.DataFrame(columns=["Matches"])
+    result_df = pd.DataFrame(columns=["Matches"], dtype=int)
     for variable in variables:
         if variable.solution_value() > 0:
             print(f"  {variable.name()} = {variable.solution_value()}")
