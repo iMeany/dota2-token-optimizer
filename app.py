@@ -1,6 +1,6 @@
 import streamlit as st
 
-from helpers import integer_linear_solver, load_hero_token_data, load_act_images
+from helpers import integer_linear_solver, load_hero_token_data, load_all_images
 
 st.set_page_config(
     page_title="Dota2 Crownfall Token optimization",
@@ -37,15 +37,15 @@ df = df.sample(frac=1)
 # * Act and Token selection
 radio_select = st.radio("Select act", index=len(act_names)-1, options=act_names, horizontal=True)
 act_idx = act_names.index(radio_select)
-token_images = load_act_images(token_order)
+token_images = load_all_images(token_order)
 required_tokens = {}
 token_col, table_col = st.columns([3, 7])
 with token_col:
     st.write("#### Required tokens selection")
-    for key in token_images[act_idx]:
+    for key in token_order[act_idx]:
         with token_col.container():
             icon_col, text_col, input_col = st.columns([2, 6, 7])
-            icon_col.image(token_images[act_idx][key], width=34)
+            icon_col.image(token_images[key], width=36)
             text_col.text(f"{key}")
             # read from query params
             required_tokens[key] = input_col.number_input("Amount", min_value=0,

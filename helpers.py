@@ -13,26 +13,34 @@ def load_hero_token_data():
     return df, act_names, token_order
 
 @st.cache_data
-def load_act_images(token_order):
-    act_token_images = []
-    for idx, act_tokens in enumerate(token_order):
-        token_images = _load_token_images(act_tokens=act_tokens, act_nr=idx+1)
-        act_token_images.append(token_images)
-    return act_token_images
+def load_all_images(token_order):
+    images = {}
+    for act_tokens in token_order:
+        for token in act_tokens:
+            images[token] = Image.open(f"assets/img/{token}_png.png")
+    return images
+    
+# @st.cache_data
+# def load_act_images(token_order):
+#     act_token_images = []
+#     for idx, act_tokens in enumerate(token_order):
+#         token_images = _load_token_images(act_tokens=act_tokens, act_nr=idx+1)
+#         act_token_images.append(token_images)
+#     return act_token_images
 
-@st.cache_data
-def _load_token_images(act_tokens, act_nr=1):
-    img = Image.open(f"assets/tokens{act_nr}.png")
-    token_dims = [(106, 90), (101, 91)]
-    sprite_h = token_dims[act_nr-1][0]
-    sprite_w = token_dims[act_nr-1][1]
-    token_images = []
-    for i in range(0, img.height, sprite_h):
-        for j in range(0, img.width, sprite_w):
-            if len(token_images) >= 18:
-                break
-            token_images.append(img.crop((j, i, j+sprite_w, i+sprite_h)))
-    return dict(zip(act_tokens, token_images))
+# @st.cache_data
+# def _load_token_images(act_tokens, act_nr=1):
+#     img = Image.open(f"assets/tokens{act_nr}.png")
+#     token_dims = [(106, 90), (101, 91)]
+#     sprite_h = token_dims[act_nr-1][0]
+#     sprite_w = token_dims[act_nr-1][1]
+#     token_images = []
+#     for i in range(0, img.height, sprite_h):
+#         for j in range(0, img.width, sprite_w):
+#             if len(token_images) >= 18:
+#                 break
+#             token_images.append(img.crop((j, i, j+sprite_w, i+sprite_h)))
+#     return dict(zip(act_tokens, token_images))
 
 def get_col_grid(img_per_col=9):
     columns = st.columns(spec=img_per_col)
