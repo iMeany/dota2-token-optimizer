@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from ortools.linear_solver import pywraplp
 from PIL import Image
+import numpy as np
 
 @st.cache_data
 def load_hero_token_data():
@@ -17,9 +18,18 @@ def load_all_images(token_order):
     images = {}
     for act_tokens in token_order:
         for token in act_tokens:
-            images[token] = Image.open(f"assets/img/{token}_png.png")
+            images[token] = _alpha_to_gray(Image.open(f"assets/img/{token}_png.png"))
     return images
-    
+
+def _alpha_to_gray(img):
+    """ Fixes the given image by setting the alpha channel to 255 for non-zero values, 
+    and setting the RGB channels to constant gray (for both light and dark themes)."""
+    img_array = np.array(img)
+    alpha_channel = img_array[:, :, 3]
+    alpha_channel[alpha_channel > 0] = 255
+    img_array[:, :, :3] = (156, 156, 156)
+    return Image.fromarray(img_array)
+
 # @st.cache_data
 # def load_act_images(token_order):
 #     act_token_images = []
@@ -50,6 +60,8 @@ def get_col_grid(img_per_col=9):
 # @st.cache_data # if we dont cache we get different results on recalculation
 def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_type="SAT"):
     """Solves the integer linear problem with the given requirements and cost column."""
+    # shuffling the rows so that it gives different solutions on recalculation, equivalent results are based on order of rows
+    val_df = val_df.sample(frac=1)
     solver = pywraplp.Solver.CreateSolver(optimization_problem_type)
     if not solver:
         return
@@ -60,7 +72,7 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     # Variables and constraints
     variables = []
     for idx, row in val_df.iterrows():
-        variables.append(solver.IntVar(0, infinity, f"{idx}"))
+        variables.append(solver.IntVar(0, infinity, str(idx)))
     constraints = []
     # only keep requirements > 0
     requirements = [(token, required) for token, required in requirements if required > 0 and token in val_df.columns]
@@ -109,6 +121,6 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
             row = val_df.loc[variable.name()].copy()
             row["Matches"] = variable.solution_value()
             result_df = pd.concat([result_df, row.to_frame().T])
-    print("")
+    print()
     return result_df
 
