@@ -18,7 +18,7 @@ def load_all_images(token_order):
     images = {}
     for act_tokens in token_order:
         for token in act_tokens:
-            images[token] = _alpha_to_gray(Image.open(f"assets/img/{token}_png.png"))
+            images[token] = _alpha_to_gray(Image.open(f"assets/img/{token.lower()}_png.png"))
     return images
 
 def _alpha_to_gray(img):
