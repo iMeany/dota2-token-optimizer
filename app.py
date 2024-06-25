@@ -1,11 +1,12 @@
 import streamlit as st
 
-from helpers import integer_linear_solver, load_hero_token_data, load_act_images
+from helpers import integer_linear_solver, load_hero_token_data, load_all_images
 
 st.set_page_config(
     page_title="Dota2 Crownfall Token optimization",
     layout="wide",
     initial_sidebar_state="expanded",
+    page_icon="🪙"
 )
 
 # * Sidebar description
@@ -31,22 +32,20 @@ st.sidebar.caption("""[dota2-token-optimizer](https://github.com/iMeany/dota2-to
 
 # * Setup data
 df, act_names, token_order = load_hero_token_data()
-# shuffling the rows so that it gives different solutions on recalculation, equivalent results are based on order of rows
-df = df.sample(frac=1)
 
 # * Act and Token selection
 radio_select = st.radio("Select act", index=len(act_names)-1, options=act_names, horizontal=True)
 act_idx = act_names.index(radio_select)
-token_images = load_act_images(token_order)
+token_images = load_all_images(token_order)
 required_tokens = {}
 token_col, table_col = st.columns([3, 7])
 with token_col:
     st.write("#### Required tokens selection")
-    for key in token_images[act_idx]:
+    for key in token_order[act_idx]:
         with token_col.container():
             icon_col, text_col, input_col = st.columns([2, 6, 7])
-            icon_col.image(token_images[act_idx][key], width=34)
-            text_col.text(f"{key}")
+            icon_col.image(token_images[key], width=36)
+            text_col.text(str(key))
             # read from query params
             required_tokens[key] = input_col.number_input("Amount", min_value=0,
                                                           key=f"token_{key}_input", label_visibility="collapsed")
@@ -56,10 +55,10 @@ with token_col:
 
 # * Editable Hero token table
 with table_col:
-    solution_tab, mapping_tab = st.tabs(["Solution", "Heroes and Tokens"])
+    solution_tab, mapping_tab = st.tabs(["Solution", "Solution + Heroes and Tokens"])
     with mapping_tab:
         st.write("You can edit the `DifficultyScore` column and **increase** the number if you want the hero to be less likely to be chosen.")
-        edited_df = st.data_editor(df, disabled=df.columns[1:].tolist(), use_container_width=True)
+        edited_df = st.data_editor(data=df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
     st.button("Recalculate solutions", type="secondary")
     # * Optimal hero selection

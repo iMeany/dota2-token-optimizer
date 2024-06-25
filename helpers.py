@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from ortools.linear_solver import pywraplp
 from PIL import Image
+import numpy as np
 
 @st.cache_data
 def load_hero_token_data():
@@ -13,26 +14,43 @@ def load_hero_token_data():
     return df, act_names, token_order
 
 @st.cache_data
-def load_act_images(token_order):
-    act_token_images = []
-    for idx, act_tokens in enumerate(token_order):
-        token_images = _load_token_images(act_tokens=act_tokens, act_nr=idx+1)
-        act_token_images.append(token_images)
-    return act_token_images
+def load_all_images(token_order):
+    images = {}
+    for act_tokens in token_order:
+        for token in act_tokens:
+            images[token] = _alpha_to_gray(Image.open(f"assets/img/{token}_png.png"))
+    return images
 
-@st.cache_data
-def _load_token_images(act_tokens, act_nr=1):
-    img = Image.open(f"assets/tokens{act_nr}.png")
-    token_dims = [(106, 90), (101, 91)]
-    sprite_h = token_dims[act_nr-1][0]
-    sprite_w = token_dims[act_nr-1][1]
-    token_images = []
-    for i in range(0, img.height, sprite_h):
-        for j in range(0, img.width, sprite_w):
-            if len(token_images) >= 18:
-                break
-            token_images.append(img.crop((j, i, j+sprite_w, i+sprite_h)))
-    return dict(zip(act_tokens, token_images))
+def _alpha_to_gray(img):
+    """ Fixes the given image by setting the alpha channel to 255 for non-zero values, 
+    and setting the RGB channels to constant gray (for both light and dark themes)."""
+    img_array = np.array(img)
+    alpha_channel = img_array[:, :, 3]
+    alpha_channel[alpha_channel > 0] = 255
+    img_array[:, :, :3] = (156, 156, 156)
+    return Image.fromarray(img_array)
+
+# @st.cache_data
+# def load_act_images(token_order):
+#     act_token_images = []
+#     for idx, act_tokens in enumerate(token_order):
+#         token_images = _load_token_images(act_tokens=act_tokens, act_nr=idx+1)
+#         act_token_images.append(token_images)
+#     return act_token_images
+
+# @st.cache_data
+# def _load_token_images(act_tokens, act_nr=1):
+#     img = Image.open(f"assets/tokens{act_nr}.png")
+#     token_dims = [(106, 90), (101, 91)]
+#     sprite_h = token_dims[act_nr-1][0]
+#     sprite_w = token_dims[act_nr-1][1]
+#     token_images = []
+#     for i in range(0, img.height, sprite_h):
+#         for j in range(0, img.width, sprite_w):
+#             if len(token_images) >= 18:
+#                 break
+#             token_images.append(img.crop((j, i, j+sprite_w, i+sprite_h)))
+#     return dict(zip(act_tokens, token_images))
 
 def get_col_grid(img_per_col=9):
     columns = st.columns(spec=img_per_col)
@@ -42,6 +60,8 @@ def get_col_grid(img_per_col=9):
 # @st.cache_data # if we dont cache we get different results on recalculation
 def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_type="SAT"):
     """Solves the integer linear problem with the given requirements and cost column."""
+    # shuffling the rows so that it gives different solutions on recalculation, equivalent results are based on order of rows
+    val_df = val_df.sample(frac=1)
     solver = pywraplp.Solver.CreateSolver(optimization_problem_type)
     if not solver:
         return
@@ -52,7 +72,7 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
     # Variables and constraints
     variables = []
     for idx, row in val_df.iterrows():
-        variables.append(solver.IntVar(0, infinity, f"{idx}"))
+        variables.append(solver.IntVar(0, infinity, str(idx)))
     constraints = []
     # only keep requirements > 0
     requirements = [(token, required) for token, required in requirements if required > 0 and token in val_df.columns]
@@ -101,6 +121,6 @@ def integer_linear_solver(val_df, requirements, cost_col, optimization_problem_t
             row = val_df.loc[variable.name()].copy()
             row["Matches"] = variable.solution_value()
             result_df = pd.concat([result_df, row.to_frame().T])
-    print("")
+    print()
     return result_df
 
