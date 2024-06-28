@@ -43,7 +43,7 @@ with token_col:
     st.write("#### Required tokens selection")
     for key in token_order[act_idx]:
         with token_col.container():
-            icon_col, text_col, input_col = st.columns([2, 6, 7])
+            icon_col, text_col, input_col = st.columns([2, 6, 7], vertical_alignment="center")
             icon_col.image(token_images[key], width=36)
             text_col.text(str(key))
             # read from query params
