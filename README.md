@@ -6,6 +6,11 @@ Suggestions and contributions are welcome.
 
 Token images are extracted from Dota2 game and are property of Valve Corporation.
 
+## Update 12-Jul-2024
+
+* Added Act 3 tokens and selection. 
+* Improved token visibility to work on light and dark themes.
+
 ## Update 24-May-2024
 
 * Added Act 2 hero tokens and calculation.
@@ -20,12 +25,9 @@ Token images are extracted from Dota2 game and are property of Valve Corporation
 - [x] Add recalculate button
 - [x] Add icons from game
 - [x] Parameters in URL
-  - [ ] Fix 3 missing column images (colored)
-- [x] Add Act 2 heroes
-  - [ ] Add nicer Act 2 hero token images
+- [x] Add Act 2 tokens
+- [x] Add Act 3 tokens
+- [ ] Add Act 4 tokens
 - [ ] Add "this hero gives x tokens from needed" col?
 - [ ] Color needed cols
 - [ ] Mobile layout (proper breaks)
-- [ ] 3-for-1 exchanges
-- [ ] 4-for-1 exchanges
-  
