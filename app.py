@@ -1,5 +1,5 @@
 import streamlit as st
-
+import numpy as np
 from helpers import integer_linear_solver, load_hero_token_data, load_all_images
 
 st.set_page_config(
@@ -34,11 +34,13 @@ st.sidebar.caption("""[dota2-token-optimizer](https://github.com/iMeany/dota2-to
 df, act_names, token_order = load_hero_token_data()
 
 # * Act and Token selection
-radio_select = st.radio("Select act", index=len(act_names)-1, options=act_names, horizontal=True)
-act_idx = act_names.index(radio_select)
+token_col, table_col = st.columns([3, 7])
+with table_col:
+    act_index = int(st.query_params["act"][0]) if "act" in st.query_params else len(act_names)-1
+    radio_select = st.radio("Select act", index=act_index, options=act_names, horizontal=True)
+    act_idx = act_names.index(radio_select)
 token_images = load_all_images(token_order)
 required_tokens = {}
-token_col, table_col = st.columns([3, 7])
 with token_col:
     st.write("#### Required tokens selection")
     for key in token_order[act_idx]:
@@ -55,20 +57,35 @@ with token_col:
 
 # * Editable Hero token table
 with table_col:
-    solution_tab, mapping_tab = st.tabs(["Solution", "Solution + Heroes and Tokens"])
-    with mapping_tab:
-        st.write("You can edit the `DifficultyScore` column and **increase** the number if you want the hero to be less likely to be chosen.")
-        edited_df = st.data_editor(data=df, disabled=df.columns[1:].tolist(), use_container_width=True)
+    token_mapping_on = st.toggle("Show Hero & Token table", value=False)
+    heroes_to_pick_on = st.toggle("Show best heroes for a single game", value=False)
+    # solution_tab, mapping_tab, heroes_pick_tab = st.tabs(["Solution", "Solution + Hero tokens & difficulty", "Heroes to pick"])
+    if token_mapping_on:
+        st.write("#### Hero token table")
+        st.caption("You can edit the `DifficultyScore` column and **increase** the number if you want the hero to be less likely to be chosen.")
+        df = st.data_editor(data=df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
+    if heroes_to_pick_on:
+        st.write("#### Heroes to pick")
+        st.caption("This shows the heroes that give the most tokens in a single game.")
+        token_types_required = [key for key, value in required_tokens.items() if value > 0]
+        heroes_to_pick = df[df[token_types_required].any(axis=1)]
+        heroes_to_pick["Total"] = 0
+        for col in token_types_required:
+            heroes_to_pick["Total"] = heroes_to_pick["Total"] + np.minimum(heroes_to_pick[col], required_tokens[col])
+        heroes_to_pick = heroes_to_pick.sort_values("Total", ascending=False)
+        st.write(heroes_to_pick[["Total"] + token_types_required])
+
+    st.write("#### Optimal hero selection")
+    st.caption("This table shows the optimal Hero selection and the number of games needed to get all the tokens you selected.")
     st.button("Recalculate solutions", type="secondary")
     # * Optimal hero selection
     try:
-        best_solution = integer_linear_solver(edited_df[['DifficultyScore'] + token_order[act_idx]], required_tokens.items(), "DifficultyScore")
+        best_solution = integer_linear_solver(df[['DifficultyScore'] + token_order[act_idx]], required_tokens.items(), "DifficultyScore")
     except Exception as e:
         st.write("Error occurred during optimization. Try again.")
         print(e)
         st.stop()
-
     if best_solution.empty:
         st.write("No solution found. Try to relax or add the constraints.")
         st.stop()
@@ -80,4 +97,4 @@ with table_col:
         # drop cols where total is zero
         best_solution = best_solution.loc[:, (best_solution != 0).any(axis=0)]
         st.dataframe(best_solution.round(0).astype(int), use_container_width=True)
-        st.caption("Remember that you can increase the `DifficultyScore`  value in the `Heroes and Tokens` tab for the heroes you don't want to play.")
+        st.caption("Remember that you can increase the `DifficultyScore`  value in the `Hero & Token` table for the heroes you don't want to play.")
