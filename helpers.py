@@ -8,10 +8,12 @@ import numpy as np
 @st.cache_data
 def load_hero_token_data():
     df = pd.read_csv("data/heroes.csv", index_col=0)
-    act_names = ['Act I: The Markets of Midgate', 'Act II: The Deserts of Druud', 'Act III: The Frosts of Icewrack'] # Act IV: The Spires of Skywrath
+    act_names = ['Act I: The Markets of Midgate', 'Act II: The Deserts of Druud', 'Act III: The Frosts of Icewrack', 'Act IV: The Spires of Skywrath']
     token_order = [["Walking","Running","Flying","Floating","Slithering","Mounted","Crawling","Jumping","Teleporting","Melee","Ranged","Disabler","Escape","Durable","Initiator","Nuker","Pusher","Healer"],
                    ["Strength","Agility","Intelligence","Universal","Demon","Undead","Spirit","Beast","Monster","God","Elemental","Unarmed","Blade","Polearm","Club","Wand","Ammunition"],
-                   ["Flame","Frost","Storm","Tide","Nature","Void","Blood","Mystic","Armor","Helmet","Shield","Robe","Cape","Mask","Fur","Scale","Minion","Illusion","Ward","Partner"]]
+                   ["Flame","Frost","Storm","Tide","Nature","Void","Blood","Mystic","Armor","Helmet","Shield","Robe","Cape","Mask","Fur","Scale","Minion","Illusion","Ward","Partner"],
+                   ["Pride","Gluttony","Sloth","Greed","Envy","Wrath","Lust","Discipline","Love","Mischief","Mountain","City","Plains","Desert","Tundra","Cave","Sky","Sea","Forest","Cosmos"],
+                   ]
     return df, act_names, token_order
 
 @st.cache_data
