@@ -66,17 +66,17 @@ with table_col:
 
     heroes_to_pick_on = st.toggle("Show best heroes for a single game", value=True)
     if heroes_to_pick_on:
-        st.write("#### Heroes to pick")
+        st.write("#### Best hero for a game")
         st.caption("This shows the heroes that give the most tokens in a single game.")
         token_types_required = [key for key, value in required_tokens.items() if value > 0]
         heroes_to_pick = df[df[token_types_required].any(axis=1)]
-        heroes_to_pick["Total"] = 0
+        heroes_to_pick.insert(loc=0, column="Total", value=0)
         for col in token_types_required:
-            heroes_to_pick["Total"] = heroes_to_pick["Total"] + np.minimum(heroes_to_pick[col], required_tokens[col])
-        heroes_to_pick = heroes_to_pick.sort_values("Total", ascending=False)
+            heroes_to_pick.loc[:, "Total"] += np.minimum(heroes_to_pick.loc[:, col], required_tokens[col])
+        heroes_to_pick = heroes_to_pick.sort_values(by="Total", ascending=False)
         st.dataframe(heroes_to_pick[["Total"] + token_types_required], use_container_width=True)
 
-    st.write("#### Optimal hero selection")
+    st.write("#### Optimal heres to get all tokens")
     st.caption("This table shows the optimal Hero selection and the number of games needed to get all the tokens you selected.")
     st.button("Recalculate solutions", type="secondary")
     # * Optimal hero selection
