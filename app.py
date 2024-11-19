@@ -6,7 +6,7 @@ st.set_page_config(
     page_title="Dota2 Crownfall Token optimization",
     layout="wide",
     initial_sidebar_state="expanded",
-    page_icon="🪙"
+    page_icon=":m:"
 )
 
 # * Sidebar description
@@ -64,7 +64,7 @@ with table_col:
         st.caption("You can edit the `DifficultyScore` column and **increase** the number if you want the hero to be less likely to be chosen.")
         df = st.data_editor(data=df, disabled=df.columns[1:].tolist(), use_container_width=True)
 
-    heroes_to_pick_on = st.toggle("Show best heroes for a single game", value=False)
+    heroes_to_pick_on = st.toggle("Show best heroes for a single game", value=True)
     if heroes_to_pick_on:
         st.write("#### Heroes to pick")
         st.caption("This shows the heroes that give the most tokens in a single game.")
@@ -74,7 +74,7 @@ with table_col:
         for col in token_types_required:
             heroes_to_pick["Total"] = heroes_to_pick["Total"] + np.minimum(heroes_to_pick[col], required_tokens[col])
         heroes_to_pick = heroes_to_pick.sort_values("Total", ascending=False)
-        st.write(heroes_to_pick[["Total"] + token_types_required])
+        st.dataframe(heroes_to_pick[["Total"] + token_types_required], use_container_width=True)
 
     st.write("#### Optimal hero selection")
     st.caption("This table shows the optimal Hero selection and the number of games needed to get all the tokens you selected.")
